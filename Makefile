@@ -1,3 +1,4 @@
+
 # ============================================================================
 # Parallel Heat Diffusion
 # ============================================================================
@@ -30,19 +31,16 @@ OMPFLAGS := -fopenmp
 # Sources
 # ----------------------------------------------------------------------------
 
-SOURCES := \
-	$(SRC_DIR)/main.c \
-	$(SRC_DIR)/grid.c \
-	$(SRC_DIR)/solver_serial.c \
-	$(SRC_DIR)/solver_openmp.c \
-	$(SRC_DIR)/validation.c \
-	$(SRC_DIR)/timer.c
+SOURCES := main.c $(wildcard $(SRC_DIR)/*.c)
 
-OBJECTS := $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/%.o,$(SOURCES))
+OBJECTS := $(BUILD_DIR)/main.o \
+	$(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/%.o,$(wildcard $(SRC_DIR)/*.c))
 
 # ----------------------------------------------------------------------------
 # Default
 # ----------------------------------------------------------------------------
+
+.DEFAULT_GOAL := all
 
 .PHONY: all
 all: release
@@ -58,9 +56,15 @@ release: $(TARGET)
 $(TARGET): $(OBJECTS)
 	$(CC) $(OBJECTS) $(OMPFLAGS) -lm -o $@
 
+# Compile source files inside src/
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c | $(BUILD_DIR)
 	$(CC) $(CPPFLAGS) $(CFLAGS) $(OMPFLAGS) -c $< -o $@
 
+# Compile main.c from project root
+$(BUILD_DIR)/main.o: main.c | $(BUILD_DIR)
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(OMPFLAGS) -c $< -o $@
+
+# Create build directory
 $(BUILD_DIR):
 	mkdir -p $(BUILD_DIR)
 
@@ -82,6 +86,21 @@ sanitize: clean
 		CFLAGS="$(CFLAGS) -O1 -g -fsanitize=address,undefined" \
 		OMPFLAGS="-fopenmp -fsanitize=address,undefined" \
 		$(TARGET)
+
+# ----------------------------------------------------------------------------
+# Memory Check
+# ----------------------------------------------------------------------------
+
+.PHONY: memcheck
+
+memcheck:
+	$(MAKE) debug
+	valgrind --leak-check=full \
+	         --show-leak-kinds=all \
+	         --track-origins=yes \
+	         --error-exitcode=1 \
+	         ./$(TARGET)
+
 
 # ----------------------------------------------------------------------------
 # Run
