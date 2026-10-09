@@ -2,22 +2,30 @@
 
 #include<stddef.h>
 
-int GRID_ERROR_CODE = -1;
+extern int GRID_ERROR_CODE;
 
-enum GridErros {
+enum GridErrors {
     ALLOCATION_ERROR,
-    OUT_OF_BOUNDS
+    NOT_ALLOCATED,
+    OUT_OF_BOUNDS,
+    DIMENSIONAL_MISMATCH
 };
 
 typedef struct Grid {
     size_t X;
     size_t Y;
     double* data;
-} Grid;
+} grid_t;
 
-void allocate_grid(Grid grid);
-void initialize_grid(Grid grid);
-void destroy_grid(Grid grid);
+void grid_alloc(grid_t* grid);
+void grid_dlloc(grid_t* grid);
 
-double grid_at_point(Grid grid, size_t i, size_t j);
-void grid_set_point(Grid grid, size_t i, size_t j, double value);
+void grid_init(grid_t grid);
+void grid_copy(const grid_t a, grid_t b);
+
+void grid_init_boundary(grid_t grid, double value);
+
+double grid_fetch(const grid_t grid, size_t i, size_t j);
+void   grid_store(grid_t grid, size_t i, size_t j, double value);
+
+void grid_show(const grid_t grid);
