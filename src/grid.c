@@ -2,6 +2,7 @@
 #include<grid.h>
 #include<stdio.h>
 #include<stdlib.h>
+#include<stdbool.h>
 
 int GRID_ERROR_CODE = -1;
 
@@ -20,16 +21,48 @@ void grid_dlloc(grid_t* grid) {
     grid->data = NULL;
 }
 
-void grid_init(grid_t grid) {
+void grid_init(grid_t grid, const int *const boundary_value) {
     if (grid.data == NULL) {
         GRID_ERROR_CODE = NOT_ALLOCATED;
         return; 
     }   
 
+    bool has_boundary_value = boundary_value? true: false;
+    const int value = has_boundary_value? *boundary_value: 0;
+    
     for(size_t i = 0; i < grid.X; i++) {
         for(size_t j = 0; j < grid.Y; j++) {
-            double heat = (double)((i * j) % 39) * 2.5;
-            grid_store(grid, i, j, heat);
+            if (has_boundary_value && (i == 0 || j == 0 || i == grid.X - 1 || j == grid.Y - 1)) 
+                grid_store(grid, i, j, value);
+
+            else {
+                double heat = (double)((i * j) % 39) * 2.5;
+                grid_store(grid, i, j, heat);
+            }
+        }
+    }
+}
+
+// must be called in a parallel region
+void grid_init_parallel(grid_t grid, const int *const boundary_value) {
+    if (grid.data == NULL) {
+        GRID_ERROR_CODE = NOT_ALLOCATED;
+        return; 
+    }   
+
+    bool has_boundary_value = boundary_value? true: false;
+    const int value = has_boundary_value? *boundary_value: 0;
+
+    #pragma omp for schedule(static) collapse(2) 
+    for(size_t i = 0; i < grid.X; i++) {
+        for(size_t j = 0; j < grid.Y; j++) {
+            if (has_boundary_value && (i == 0 || j == 0 || i == grid.X - 1 || j == grid.Y - 1)) 
+                grid_store(grid, i, j, value);
+
+            else {
+                double heat = (double)((i * j) % 39) * 2.5;
+                grid_store(grid, i, j, heat);
+            }
         }
     }
 }
@@ -53,22 +86,23 @@ void grid_copy(const grid_t a, grid_t b) {
     }
 }
 
-void grid_init_boundary(grid_t grid, double value) {
-    if (grid.data == NULL) {
+void grid_copy_parallel(const grid_t a, grid_t b) {
+    if (a.data == NULL || b.data == NULL) {
         GRID_ERROR_CODE = NOT_ALLOCATED;
-        return; 
-    }   
-
-    grid_init(grid);
-    
-    for(size_t i = 0, j = grid.Y - 1; i < grid.X; i++) {
-        grid_store(grid, i, 0, value);
-        grid_store(grid, i, j, value);
+        return;
     }
 
-    for(size_t j = 0, i = grid.X - 1; j < grid.Y; j++){
-        grid_store(grid, i, 0, value);
-        grid_store(grid, i, j, value);
+    if (a.X != b.X || a.Y != b.Y) {
+        GRID_ERROR_CODE = DIMENSIONAL_MISMATCH;
+        return;
+    }
+
+    #pragma omp for schedule(static) collpase(2) 
+    for(size_t i = 0; i < a.X; i++) {
+        for(size_t j = 0; j < a.Y; j++) {
+            double p = grid_fetch(a, i, j);
+            grid_store(b, i, j, p);
+        }
     }
 }
 

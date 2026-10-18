@@ -17,6 +17,11 @@ int main(void) {
     simulate(experiment);
 
     terminate(&experiment);
+
+    #pragma omp parallel
+    {
+        
+    }
     
     return 0;
 }

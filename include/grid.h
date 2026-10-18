@@ -20,10 +20,11 @@ typedef struct Grid {
 void grid_alloc(grid_t* grid);
 void grid_dlloc(grid_t* grid);
 
-void grid_init(grid_t grid);
+void grid_init(grid_t grid, const int *const boundary_value);
 void grid_copy(const grid_t a, grid_t b);
 
-void grid_init_boundary(grid_t grid, double value);
+void grid_init_parallel(grid_t grid, const int *const boundary_value);
+void grid_copy_parallel(const grid_t a, grid_t b);
 
 double grid_fetch(const grid_t grid, size_t i, size_t j);
 void   grid_store(grid_t grid, size_t i, size_t j, double value);
