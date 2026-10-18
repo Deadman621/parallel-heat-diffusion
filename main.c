@@ -14,14 +14,11 @@ int main(void) {
     };
 
     create_initial_state(&experiment, NULL, NULL);
-    simulate(experiment);
-
-    terminate(&experiment);
-
     #pragma omp parallel
     {
-        
+        simulate_parallel(experiment);
     }
+    terminate(&experiment);
     
     return 0;
 }
