@@ -31,3 +31,22 @@ state_t forward(const state_t A, state_t B) {
     B.k = A.k + 1;
     return B;
 }
+
+// does not increment
+void forward_parallel(const state_t A, state_t *const B) {
+    grid_t data = B->domain;
+
+    size_t x = A.domain.X;
+    size_t y = A.domain.Y;
+    
+    #pragma omp for schedule(static) collapse(2)
+    for(size_t i = 1; i < x - 1; i++) {
+        for(size_t j = 1; j < y - 1; j++) {
+            double cell = forward_cell(A, i, j);
+            grid_store(data, i, j, cell);
+        }
+    }    
+
+    #pragma omp single
+    B->k = A.k + 1;
+}

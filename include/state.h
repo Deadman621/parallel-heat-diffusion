@@ -11,3 +11,5 @@ typedef struct State {
 } state_t;
 
 state_t forward(const state_t A, state_t B);
+
+void forward_parallel(const state_t A, state_t *const B);
