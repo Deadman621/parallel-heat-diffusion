@@ -27,5 +27,7 @@ typedef struct Heat {
 state_t create_initial_state(heat_t* config, char* load_from_file, const grid_t *const load_from_grid); 
 state_t simulate(heat_t config);
 
+state_t simulate_parallel(heat_t config);
+
 void save_to_file(heat_t config, state_t state);
 void terminate(heat_t* config); // cleanup + release all pointers

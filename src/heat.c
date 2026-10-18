@@ -40,8 +40,8 @@ state_t create_initial_state(heat_t* config, char* load_from_file, const grid_t 
     }
 
     else {
-        grid_init_boundary(d1, config->boundary);
-        grid_init_boundary(d2, config->boundary);
+        grid_init(d1, &config->boundary);
+        grid_init(d2, &config->boundary);
     } 
 
     state_t a = {d1, 0, alpha}, b = {d2, 0, alpha};
@@ -61,6 +61,23 @@ state_t simulate(heat_t config) {
         states[k ^ 1] = forward(states[k], states[k ^ 1]);
         printf("timestep = %lu\n", i);
         grid_show(states[k ^ 1].domain);
+    }
+
+    return states[K & 1];
+}
+
+state_t simulate_parallel(heat_t config) {
+    size_t K = config.K;
+    state_t* states = config.states;
+
+    for (size_t i = 0; i < K; i++) {
+        size_t k = i & 1;
+        forward_parallel(states[k], &states[k ^ 1]);
+        #pragma omp single
+        {
+            printf("timestep = %lu\n", i);
+            grid_show(states[k ^ 1].domain);
+        }
     }
 
     return states[K & 1];
