@@ -21,14 +21,14 @@ void grid_dlloc(grid_t* grid) {
     grid->data = NULL;
 }
 
-void grid_init(grid_t grid, const int *const boundary_value) {
+void grid_init(grid_t grid, const double *const boundary_value) {
     if (grid.data == NULL) {
         GRID_ERROR_CODE = NOT_ALLOCATED;
         return; 
     }   
 
     bool has_boundary_value = boundary_value? true: false;
-    const int value = has_boundary_value? *boundary_value: 0;
+    const double value = has_boundary_value? *boundary_value: 0;
     
     for(size_t i = 0; i < grid.X; i++) {
         for(size_t j = 0; j < grid.Y; j++) {
@@ -44,14 +44,14 @@ void grid_init(grid_t grid, const int *const boundary_value) {
 }
 
 // must be called in a parallel region
-void grid_init_parallel(grid_t grid, const int *const boundary_value) {
+void grid_init_parallel(grid_t grid, const double *const boundary_value) {
     if (grid.data == NULL) {
         GRID_ERROR_CODE = NOT_ALLOCATED;
         return; 
     }   
 
     bool has_boundary_value = boundary_value? true: false;
-    const int value = has_boundary_value? *boundary_value: 0;
+    const double value = has_boundary_value? *boundary_value: 0;
 
     #pragma omp for schedule(static) collapse(2) 
     for(size_t i = 0; i < grid.X; i++) {
@@ -63,8 +63,7 @@ void grid_init_parallel(grid_t grid, const int *const boundary_value) {
                 double heat = (double)((i * j) % 39) * 2.5;
                 grid_store(grid, i, j, heat);
             }
-        }
-    }
+        }    }
 }
 
 void grid_copy(const grid_t a, grid_t b) {
@@ -97,7 +96,7 @@ void grid_copy_parallel(const grid_t a, grid_t b) {
         return;
     }
 
-    #pragma omp for schedule(static) collpase(2) 
+    #pragma omp for schedule(static) collapse(2) 
     for(size_t i = 0; i < a.X; i++) {
         for(size_t j = 0; j < a.Y; j++) {
             double p = grid_fetch(a, i, j);
