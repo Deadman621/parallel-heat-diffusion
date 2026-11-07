@@ -3,9 +3,10 @@
 #include<stddef.h>
 #include<state.h>
 
-extern int HEAT_ERROR_CODE;
+extern size_t HEAT_ERROR_CODE;
 
 enum HeatErrors {
+    NO_HEAT_ERROR,
     INVALID_ARGUMENT
 };
 

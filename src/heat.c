@@ -2,16 +2,15 @@
 #include<grid.h>
 
 #include<stdio.h>
+#include<stdlib.h>
 
-int HEAT_ERROR_CODE = -1;
+size_t HEAT_ERROR_CODE = 0;
  
 state_t create_initial_state(heat_t* config, char* load_from_file, const grid_t *const load_from_grid) {
     grid_t d1 = {config->x, config->y, NULL}; 
     grid_t d2 = d1;
 
-    double  alpha = config->diffusivity * config->dt / config->h * config->h;
-
-    grid_alloc(&d1); grid_alloc(&d2);
+    double alpha = config->diffusivity * config->dt / config->h * config->h;
 
     if (load_from_file && load_from_grid) {
         state_t error = {d1, 0, alpha};
@@ -20,7 +19,17 @@ state_t create_initial_state(heat_t* config, char* load_from_file, const grid_t 
     }
 
     if (load_from_file) {
-        /* File loading logic */
+        state_t error = {d1, 0, alpha};
+
+        grid_fetch_file(&d1, load_from_file);
+
+        if (config->x != d1.X) {
+            GRID_ERROR_CODE = DIMENSIONAL_MISMATCH;
+            free(d1.data); d1.data = NULL;
+            return error;
+        }
+
+        grid_alloc(&d2);
     } 
     
     else if (load_from_grid) {
@@ -36,10 +45,12 @@ state_t create_initial_state(heat_t* config, char* load_from_file, const grid_t 
             return error;
         }
      
+        grid_alloc(&d1); grid_alloc(&d2);
         grid_copy(*load_from_grid, d1);
     }
 
     else {
+        grid_alloc(&d1); grid_alloc(&d2);
         grid_init(d1, &config->boundary);
         grid_init(d2, &config->boundary);
     } 
